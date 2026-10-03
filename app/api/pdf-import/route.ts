@@ -4,25 +4,28 @@ import { supabase } from '@/lib/supabase';
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const file = formData.get('file') as File | null;
+    // Accept both 'file' and 'pdf' field names
+    const file = (formData.get('file') || formData.get('pdf')) as File | null;
     const quote_data = formData.get('quote_data') as string | null;
 
-    if (!file || !quote_data) {
+    if (!file) {
       return NextResponse.json(
-        { error: 'File and quote_data are required' },
+        { error: 'PDF file is required' },
         { status: 400 }
       );
     }
 
-    // Parse quote_data JSON
-    let quoteInfo;
-    try {
-      quoteInfo = JSON.parse(quote_data);
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid quote_data JSON' },
-        { status: 400 }
-      );
+    // Parse quote_data JSON if provided
+    let quoteInfo: any = {};
+    if (quote_data) {
+      try {
+        quoteInfo = JSON.parse(quote_data);
+      } catch {
+        return NextResponse.json(
+          { error: 'Invalid quote_data JSON' },
+          { status: 400 }
+        );
+      }
     }
 
     // For now, we'll just store the quote metadata in rfqs/rfq_lines
